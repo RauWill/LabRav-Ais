@@ -8,11 +8,9 @@ public class Order {
     private final OrderId id;
     private OrderStatus status;
     private final List<OrderItem> items = new ArrayList<>();
-    private final OrderPolicy policy;
 
-    public Order(OrderId id, OrderPolicy policy) {
+    public Order(OrderId id) {
         this.id = id;
-        this.policy = policy;
         this.status = OrderStatus.NEW;
     }
 
@@ -24,36 +22,24 @@ public class Order {
     }
 
     public Money calculateTotal() {
-        if (items.isEmpty()) {
-            return Money.usd(0);
-        }
         return items.stream()
                 .map(OrderItem::totalPrice)
                 .reduce(Money::add)
                 .orElse(Money.usd(0));
     }
 
-    public void pay() {
-        if (status != OrderStatus.NEW) {
-            throw new IllegalStateException("Only NEW orders can be paid");
-        }
-        if (!policy.isValidTotal(calculateTotal())) {
-            throw new IllegalStateException("Order total is below minimum threshold");
-        }
+    public void pay(OrderRule rules) {
+        rules.check(this, OrderAction.PAY);
         this.status = OrderStatus.PAID;
     }
 
-    public void ship() {
-        if (!policy.canBeShipped(status)) {
-            throw new IllegalStateException("Order cannot be shipped from status " + status);
-        }
+    public void ship(OrderRule rules) {
+        rules.check(this, OrderAction.SHIP);
         this.status = OrderStatus.SHIPPED;
     }
 
-    public void cancel() {
-        if (!policy.canBeCancelled(status)) {
-            throw new IllegalStateException("Order cannot be cancelled from status " + status);
-        }
+    public void cancel(OrderRule rules) {
+        rules.check(this, OrderAction.CANCEL);
         this.status = OrderStatus.CANCELLED;
     }
 

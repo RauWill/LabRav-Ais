@@ -1,40 +1,27 @@
-# Order System (LabDevel)
+# CSS-3008 · Lab 2 — Spring Boot joined to the Order System
 
-Учебный проект системы управления заказами, разработанный с применением принципов **Domain-Driven Design (DDD)** и **Clean Architecture** на языке Java.
+Product: orders (`Order`, `OrderId`, `OrderStatus`, `OrderPolicy`) — same as Lab 1.
 
----
+Run: `mvn -q verify` · `mvn spring-boot:run`
 
-## 🛠 Технологический стек
+## Package diagram
 
-* **Java**: 17
-* **Система сборки**: Maven
-* **Тестирование**: JUnit 5 / Maven Surefire Plugin
+```
+  dto                client                 handler          config
+  ErpOrderStatusDto  InMemoryOrderRepository OrderService    Application
+  (JSON later)       (HTTP/storage)          @Service        AppConfig (@Bean)
+       \                  \                   /                  |
+        \                  \                 /            injects OrderRule
+                          domain
+        OrderId  OrderStatus  OrderPolicy  Order  Money  OrderItem
+        OrderRule + StatusTransitionRule + MinimumTotalRule
+        (+ CompositeOrderRule, OrderRepository)
+                         (no Spring)
+```
 
----
+Arrows point inward. `domain` never imports `org.springframework`.
 
-## 📁 Структура проекта
-
-```text
-LabDevel/
-├── pom.xml
-└── src/
-    ├── main/
-    │   └── java/
-    │       └── com/
-    │           └── example/
-    │               ├── domain/                  # Доменный слой (Core Business Logic)
-    │               │   ├── Money.java           # Value Object: Работа с деньгами
-    │               │   ├── Order.java           # Aggregate Root: Сущность заказа
-    │               │   ├── OrderId.java         # Value Object: Уникальный идентификатор заказа
-    │               │   ├── OrderItem.java       # Позиция в заказе (товар, количество, цена)
-    │               │   ├── OrderPolicy.java     # Бизнес-правила и политики заказа
-    │               │   └── OrderStatus.java     # Enum: Статусы жизненного цикла заказа
-    │               └── service/                 # Слой сервисов и инфраструктуры
-    │                   ├── InMemoryOrderRepository.java  # Реализация хранилища в памяти
-    │                   ├── OrderRepository.java          # Интерфейс репозитория
-    │                   └── OrderService.java             # Прикладной сервис управления заказами
-    └── test/
-        └── java/
-            └── com/
-                └── example/
-                    └── OrderSystemTest.java     # Модульные тесты системы
+## Rules
+- `StatusTransitionRule` — status table: NEW → PAID → SHIPPED, cancel only from NEW/PAID.
+- `MinimumTotalRule` — stop-factor: an order below the minimum total cannot be paid.
+- Chain is wired with a `@Bean` in `config/AppConfig`; `OrderService` gets `OrderRule` by constructor injection.

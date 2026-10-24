@@ -1,7 +1,8 @@
 package com.example;
 
+import com.example.client.InMemoryOrderRepository;
 import com.example.domain.*;
-import com.example.service.*;
+import com.example.handler.OrderService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,10 @@ class OrderSystemTest {
 
     @BeforeEach
     void setUp() {
-        service = new OrderService(new InMemoryOrderRepository(), new OrderPolicy());
+        OrderPolicy policy = new OrderPolicy();
+        OrderRule rules = new CompositeOrderRule(
+                new StatusTransitionRule(policy), new MinimumTotalRule(policy));
+        service = new OrderService(new InMemoryOrderRepository(), rules);
     }
 
     @Test
