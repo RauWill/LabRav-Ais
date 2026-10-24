@@ -7,10 +7,12 @@ import org.springframework.stereotype.Service;
 public class OrderService {
     private final OrderRepository repository;
     private final OrderRule rules;
+    private final ShipmentNotifier notifier;
 
-    public OrderService(OrderRepository repository, OrderRule rules) {
+    public OrderService(OrderRepository repository, OrderRule rules, ShipmentNotifier notifier) {
         this.repository = repository;
         this.rules = rules;
+        this.notifier = notifier;
     }
 
     public OrderId createOrder() {
@@ -35,6 +37,7 @@ public class OrderService {
         Order order = getOrder(id);
         order.ship(rules);
         repository.save(order);
+        notifier.shipped(id);
     }
 
     public void cancelOrder(OrderId id) {

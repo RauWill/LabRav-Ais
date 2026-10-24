@@ -18,7 +18,7 @@ class OrderSystemTest {
         OrderPolicy policy = new OrderPolicy();
         OrderRule rules = new CompositeOrderRule(
                 new StatusTransitionRule(policy), new MinimumTotalRule(policy));
-        service = new OrderService(new InMemoryOrderRepository(), rules);
+        service = new OrderService(new InMemoryOrderRepository(), rules, id -> { });
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.example.config;
 
 import com.example.client.InMemoryOrderRepository;
+import com.example.client.LoggingShipmentNotifier;
 import com.example.domain.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -23,5 +24,10 @@ public class AppConfig {
     @Bean
     public OrderRepository orderRepository() {
         return new InMemoryOrderRepository();
+    }
+
+    @Bean
+    public ShipmentNotifier shipmentNotifier() {
+        return new LoggingShipmentNotifier();
     }
 }
