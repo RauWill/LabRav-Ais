@@ -12,15 +12,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Needs PostgreSQL on localhost:5432 (docker compose up -d).
+ * Flyway builds the table when the context starts; Hibernate only validates it.
  * Deliberately NOT @Transactional: asserts see what was really committed.
  */
 @SpringBootTest
@@ -29,13 +27,21 @@ class OrderPersistenceTest {
     private static final OrderNumber KEY = new OrderNumber("ORD-1042");
 
     @Autowired JdbcTemplate jdbc;
-    @Autowired OrderJdbc orders;
+    @Autowired OrderJpa orders;
     @Autowired OrderRegistrationService service;
 
+    /** Delete rows, never drop the table: flyway_schema_history would still say V1 ran. */
     @BeforeEach
-    void cleanDatabase() throws IOException {
-        jdbc.execute("DROP TABLE IF EXISTS orders");
-        jdbc.execute(Files.readString(Path.of("src/main/resources/db/schema.sql")));
+    void empty() {
+        jdbc.update("DELETE FROM orders");
+    }
+
+    @Test
+    void flywayCreatedTheTableFromV1() {
+        Integer applied = jdbc.queryForObject(
+                "SELECT count(*) FROM flyway_schema_history WHERE version = '1' AND success",
+                Integer.class);
+        assertEquals(1, applied);
     }
 
     @Test
@@ -67,6 +73,6 @@ class OrderPersistenceTest {
 
     @Test
     void unknownStatusTextIsNotInventedAsAStatus() {
-        assertThrows(IllegalStateException.class, () -> OrderJdbc.toStatus("BOGUS"));
+        assertThrows(IllegalStateException.class, () -> OrderMapper.toStatus("BOGUS"));
     }
 }

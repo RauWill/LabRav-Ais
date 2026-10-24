@@ -13,4 +13,4 @@ public record OrderItem(String productId, int quantity, Money unitPrice) {
     public Money totalPrice() {
         return unitPrice.multiply(quantity);
     }
-}
+}

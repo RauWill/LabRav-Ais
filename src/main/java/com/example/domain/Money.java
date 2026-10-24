@@ -25,4 +25,4 @@ public record Money(BigDecimal amount, String currency) {
         }
         return new Money(this.amount.add(other.amount), currency);
     }
-}
+}

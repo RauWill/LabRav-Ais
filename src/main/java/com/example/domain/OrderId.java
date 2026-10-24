@@ -12,4 +12,4 @@ public record OrderId(String value) {
     public static OrderId generate() {
         return new OrderId(UUID.randomUUID().toString());
     }
-}
+}
